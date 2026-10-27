@@ -1,0 +1,50 @@
+name: Build Firmware
+
+'on':
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'PlatformIO Environment Target'
+        required: false
+        default: 'tx-diy-e28-2400-esp32'
+        type: string
+  push:
+    branches:
+      - 'main'
+      - '**'
+    paths:
+      - 'mLRS/**'
+      - 'platformio.ini'
+      - '.github/workflows/**'
+
+jobs:
+  build:
+    name: Build Firmware (${{ inputs.target || 'tx-diy-e28-2400-esp32' }})
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install PlatformIO
+        run: pip install -U platformio
+
+      - name: Build firmware
+        run: pio run -e ${{ inputs.target || 'tx-diy-e28-2400-esp32' }}
+
+      - name: Upload firmware artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mLRS-firmware-${{ inputs.target || 'tx-diy-e28-2400-esp32' }}
+          path: |
+            .pio/build/**/firmware.bin
+            .pio/build/**/firmware.elf

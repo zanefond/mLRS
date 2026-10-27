@@ -62,6 +62,29 @@ const rfpower_t rfpower_list[] = {
 #endif
 
 
+//-- DIY E28 2.4G (ELRS power_values: [-15, -11, -8, -5, -1] for 10..250 mW)
+// PA max 24 dBm (250 mW), PAin max -1 dBm, PA gain 25 dB, LNA gain 12 dB
+#if defined POWER_PA_E28_2G4M20S
+#define POWER_PA_DEFINED
+
+#define POWER_GAIN_DBM            25 // gain of a PA stage if present
+#define POWER_SX1280_MAX          (SX1280_POWER_0_DBM-1) // maximum allowed sx power (-1 dBm)
+#define POWER_USE_DEFAULT_RFPOWER_CALC
+
+#define RFPOWER_DEFAULT           3 // index into rfpower_list array (50 mW / 17 dBm)
+
+const rfpower_t rfpower_list[] = {
+    { .dbm = POWER_MIN, .mW = INT8_MIN },
+    { .dbm = POWER_10_DBM, .mW = 10 },
+    { .dbm = POWER_14_DBM, .mW = 25 },
+    { .dbm = POWER_17_DBM, .mW = 50 },
+    { .dbm = POWER_20_DBM, .mW = 100 },
+    { .dbm = POWER_24_DBM, .mW = 250 },
+};
+
+#endif
+
+
 //-- SKY65383-11
 // PA max 30 dBm, PAin max 6 dBm, PA gain 34 dB, LNA gain 12 dB
 #if defined POWER_PA_SKY65383_11 || defined POWER_PA_MATEK_MR24_30 || defined POWER_PA_MATEK_MTX_DB30_SX128X // Matek mR24-30
