@@ -36,7 +36,13 @@ jobs:
           cache: 'pip'
 
       - name: Install PlatformIO
-        run: pip install -U platformio
+        run: pip install -U platformio future
+
+      - name: Generate MAVLink headers
+        run: |
+          cd mLRS/Common/mavlink
+          python fmav_generate_c_library.py
+          cd ../../..
 
       - name: Build firmware
         run: pio run -e ${{ inputs.target || 'tx-diy-e28-2400-esp32' }}
