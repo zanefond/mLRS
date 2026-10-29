@@ -64,11 +64,12 @@ typedef enum {
 
 // NOTE: not all hardware supports more than 400k (e.g. those with diodes may not)
 // TODO: I guess we want a define to enable/disable autobauding
-#define CRSF_AUTOBAUD_CYCLES  40 // 40*3*50ms = 6 sec
+#define CRSF_AUTOBAUD_CYCLES  40 // deprecated, autobaud no longer times out
 #define CRSF_AUTOBAUD_MS  50
-#define CRSF_AUTOBAUD_PROTOCOLS_LEN  4
-static const uint32_t crsf_baud[CRSF_AUTOBAUD_PROTOCOLS_LEN] = { 400000, 921600, 1870000, 416666};
-static const uint32_t crsf_inverted[CRSF_AUTOBAUD_PROTOCOLS_LEN] = { true, true, true, false};
+#define CRSF_AUTOBAUD_PROTOCOLS_LEN  5
+#define CRSF_PROTOCOLS_NUM  CRSF_AUTOBAUD_PROTOCOLS_LEN
+static const uint32_t crsf_baud[CRSF_AUTOBAUD_PROTOCOLS_LEN] = { 400000, 921600, 1870000, 416666, 115200 };
+static const uint32_t crsf_inverted[CRSF_AUTOBAUD_PROTOCOLS_LEN] = { true, true, true, false, true };
 
 
 class tTxCrsf : public tPin5BridgeBase, public tSerialBase
@@ -470,6 +471,11 @@ void tTxCrsf::autobaud_do(void)
 
     if (!autobaud.is_running) return;
 
+    if (autobaud.channels_received_cnt > 5) {
+        autobaud.is_running = false; // disable, sufficiently many valid frames received
+        return;
+    }
+
     uint32_t tnow_ms = millis32();
 
     if (!autobaud.tlast_ms) { // this is the first occurrence, so skip
@@ -477,8 +483,13 @@ void tTxCrsf::autobaud_do(void)
     }
 
     if ((tnow_ms - autobaud.tlast_ms) > CRSF_AUTOBAUD_MS) {
+        // If we received valid channels, don't switch protocol yet; allow frames to accumulate up to >5.
+        // If no more frames arrive for 500ms, reset counter and resume cycling.
+        if (autobaud.channels_received_cnt > 0 && (tnow_ms - autobaud.tlast_ms) < 500) {
+            return;
+        }
+
         autobaud.tlast_ms = tnow_ms;
-        autobaud.cycles_cnt--;
 
         for (uint8_t n = 0; n < CRSF_AUTOBAUD_PROTOCOLS_LEN; n++) {
             INCc(autobaud.protocol_idx, CRSF_AUTOBAUD_PROTOCOLS_LEN); // try next protocol
@@ -487,9 +498,6 @@ void tTxCrsf::autobaud_do(void)
         state = STATE_IDLE;
         autobaud.channels_received_cnt = 0;
     }
-
-    if (autobaud.channels_received_cnt > 5) autobaud.is_running = false; // disable, sufficiently many valid frames received
-    if (!autobaud.cycles_cnt) autobaud.is_running = false; // disable, too many tries
 #endif
 }
 
