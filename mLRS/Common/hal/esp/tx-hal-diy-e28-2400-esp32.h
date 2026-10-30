@@ -195,7 +195,7 @@ IRAM_ATTR void fan_set_power(int8_t power_dbm)
   ESP32 GPIOs. Adapt the three IO_Pxx values below (GPIO32/33 are just examples,
   they are free on this board) and change "#if 0" to "#if 1".
 */
-#if 0
+#if 1
 
 #define DEVICE_HAS_ESP_WIFI_BRIDGE_ESP8266
 #define DEVICE_HAS_ESP_WIFI_BRIDGE_CONFIGURE
