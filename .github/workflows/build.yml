@@ -36,8 +36,8 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Install PlatformIO
-        run: pip install -U platformio future
+      - name: Install PlatformIO and Dependencies
+        run: pip install -U platformio future intelhex cryptography
 
       - name: Generate MAVLink headers
         run: |
