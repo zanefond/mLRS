@@ -198,7 +198,6 @@ IRAM_ATTR void fan_set_power(int8_t power_dbm)
 #if 1
 
 #define DEVICE_HAS_ESP_WIFI_BRIDGE_ESP8266
-#define DEVICE_HAS_ESP_WIFI_BRIDGE_CONFIGURE
 
 #define UARTD_USE_SERIAL2 // bridge port
 #define UARTD_BAUD                115200
@@ -208,18 +207,20 @@ IRAM_ATTR void fan_set_power(int8_t power_dbm)
 #define UARTD_RXBUFSIZE           TX_SERIAL_RXBUFSIZE
 
 #define ESP_RESET                 IO_P32 // backpack EN/RST
-#define ESP_GPIO0                 IO_P33 // backpack GPIO0/BOOT, is inverted in the code
+#define ESP_GPIO0                 IO_P33 // backpack GPIO0/BOOT
 
 void esp_init(void)
 {
-    gpio_init(ESP_GPIO0, IO_MODE_OUTPUT_PP_LOW); // high -> esp will start in bootloader mode
-    gpio_init(ESP_RESET, IO_MODE_OUTPUT_PP_LOW); // low -> esp is in reset
+    gpio_init(ESP_GPIO0, IO_MODE_OUTPUT_PP_HIGH);
+    gpio_init(ESP_RESET, IO_MODE_OUTPUT_PP_HIGH);
+    gpio_high(ESP_GPIO0);
+    gpio_high(ESP_RESET);
 }
 
 IRAM_ATTR void esp_reset_high(void) { gpio_high(ESP_RESET); }
-IRAM_ATTR void esp_reset_low(void) { gpio_low(ESP_RESET); }
+IRAM_ATTR void esp_reset_low(void) { gpio_high(ESP_RESET); }
 
-IRAM_ATTR void esp_gpio0_high(void) { gpio_low(ESP_GPIO0); }
+IRAM_ATTR void esp_gpio0_high(void) { gpio_high(ESP_GPIO0); }
 IRAM_ATTR void esp_gpio0_low(void) { gpio_high(ESP_GPIO0); }
 
 #endif

@@ -62,7 +62,7 @@ Troubleshooting:
 // uncomment what you want, you must select one (and only one)
 // (you also need to set the board in the Arduino IDE accordingly)
 //#define MODULE_MATEK_MTX_DB30                 // board: ESP32 PICO-D4
-//#define MODULE_ESP82XX_ELRS_TX                // board: Generic ESP8266 Module or Generic ESP8285 Module
+#define MODULE_ESP82XX_ELRS_TX                // board: Generic ESP8266 Module or Generic ESP8285 Module
 //#define MODULE_ESP32C3_ELRS_TX                // board: ESP32C3 Dev Module
 //#define MODULE_ESP32_DEVKITC_V4               // board: ESP32 Dev Module
 //#define MODULE_NODEMCU_ESP32_WROOM32          // board: ESP32 Dev Module
@@ -1145,6 +1145,7 @@ tESPNOWHandler espnow_handler;
 
 void setup()
 {
+    pinMode(0, INPUT_PULLUP);
     led_init();
     dbg_init();
     //delay(500); // we delay for 750 ms anyway

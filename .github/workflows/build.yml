@@ -14,6 +14,7 @@ name: Build Firmware
       - '**'
     paths:
       - 'mLRS/**'
+      - 'esp/**'
       - 'platformio.ini'
       - '.github/workflows/**'
 
@@ -44,13 +45,38 @@ jobs:
           python fmav_generate_c_library.py
           cd ../../..
 
-      - name: Build firmware
-        run: pio run -e ${{ inputs.target || 'tx-diy-e28-2400-esp32' }}
+      - name: Build TX firmware
+        run: |
+          pio run -e ${{ inputs.target || 'tx-diy-e28-2400-esp32' }}
+          mkdir -p release
+          TARGET="${{ inputs.target || 'tx-diy-e28-2400-esp32' }}"
+          cp .pio/build/${TARGET}/firmware.bin release/tx-diy-e28-2400-esp32-v1.4.05.bin
+          cp .pio/build/${TARGET}/firmware.bin release/${TARGET}-github-ci.bin
+          cp .pio/build/${TARGET}/firmware.elf release/${TARGET}-github-ci.elf
 
-      - name: Upload firmware artifacts
+      - name: Build Wireless Bridge firmware
+        run: |
+          cd esp/mlrs-wireless-bridge
+          pio run -e esp8285
+          cd ../..
+          cp esp/mlrs-wireless-bridge/.pio/build/esp8285/firmware.bin release/mlrs-wireless-bridge-esp8266-no-at.bin
+          gzip -c -9 release/mlrs-wireless-bridge-esp8266-no-at.bin > release/mlrs-wireless-bridge-esp8266-no-at.bin.gz
+
+      - name: Upload TX firmware artifacts
         uses: actions/upload-artifact@v4
         with:
           name: mLRS-firmware-${{ inputs.target || 'tx-diy-e28-2400-esp32' }}
           path: |
             .pio/build/**/firmware.bin
             .pio/build/**/firmware.elf
+            release/tx-diy-e28-2400-esp32-v1.4.05.bin
+            release/*-github-ci.bin
+            release/*-github-ci.elf
+
+      - name: Upload Wireless Bridge artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlrs-wireless-bridge-esp8266-no-at
+          path: |
+            release/mlrs-wireless-bridge-esp8266-no-at.bin
+            release/mlrs-wireless-bridge-esp8266-no-at.bin.gz

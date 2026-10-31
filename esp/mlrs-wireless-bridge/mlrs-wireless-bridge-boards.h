@@ -138,7 +138,7 @@ GPIO15 = RTC_GPIO13
     #define USE_LED
 
     #undef GPIO0_IO
-    #define GPIO0_IO  0
+    //#define GPIO0_IO  0
     #if WIRELESS_PROTOCOL != 4
         #undef WIRELESS_PROTOCOL
         #define WIRELESS_PROTOCOL 1 // make UDP the default
