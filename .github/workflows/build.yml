@@ -4,9 +4,9 @@ name: Build Firmware
   workflow_dispatch:
     inputs:
       target:
-        description: 'PlatformIO Environment Target'
+        description: 'PlatformIO Environment Target (all, rx-diy-e28-2400-esp8285, tx-diy-e28-2400-esp32)'
         required: false
-        default: 'tx-diy-e28-2400-esp32'
+        default: 'all'
         type: string
   push:
     branches:
@@ -20,7 +20,7 @@ name: Build Firmware
 
 jobs:
   build:
-    name: Build Firmware (${{ inputs.target || 'tx-diy-e28-2400-esp32' }})
+    name: Build Firmware (${{ inputs.target || 'all' }})
     runs-on: ubuntu-latest
 
     steps:
@@ -45,14 +45,39 @@ jobs:
           python fmav_generate_c_library.py
           cd ../../..
 
-      - name: Build TX firmware
+      - name: Build mLRS firmware
         run: |
-          pio run -e ${{ inputs.target || 'tx-diy-e28-2400-esp32' }}
           mkdir -p release
-          TARGET="${{ inputs.target || 'tx-diy-e28-2400-esp32' }}"
-          cp .pio/build/${TARGET}/firmware.bin release/tx-diy-e28-2400-esp32-v1.4.05.bin
-          cp .pio/build/${TARGET}/firmware.bin release/${TARGET}-github-ci.bin
-          cp .pio/build/${TARGET}/firmware.elf release/${TARGET}-github-ci.elf
+          TARGET="${{ inputs.target || 'all' }}"
+          
+          # Build RX if requested or all
+          if [ "$TARGET" = "all" ] || [ "$TARGET" = "rx-diy-e28-2400-esp8285" ]; then
+            echo "::group::Building RX rx-diy-e28-2400-esp8285"
+            pio run -e rx-diy-e28-2400-esp8285
+            cp .pio/build/rx-diy-e28-2400-esp8285/firmware.bin release/rx-diy-e28-2400-esp8285-v1.4.05.bin
+            cp .pio/build/rx-diy-e28-2400-esp8285/firmware.bin release/rx-diy-e28-2400-esp8285-github-ci.bin
+            cp .pio/build/rx-diy-e28-2400-esp8285/firmware.elf release/rx-diy-e28-2400-esp8285-github-ci.elf
+            echo "::endgroup::"
+          fi
+
+          # Build TX if requested or all
+          if [ "$TARGET" = "all" ] || [ "$TARGET" = "tx-diy-e28-2400-esp32" ]; then
+            echo "::group::Building TX tx-diy-e28-2400-esp32"
+            pio run -e tx-diy-e28-2400-esp32
+            cp .pio/build/tx-diy-e28-2400-esp32/firmware.bin release/tx-diy-e28-2400-esp32-v1.4.05.bin
+            cp .pio/build/tx-diy-e28-2400-esp32/firmware.bin release/tx-diy-e28-2400-esp32-github-ci.bin
+            cp .pio/build/tx-diy-e28-2400-esp32/firmware.elf release/tx-diy-e28-2400-esp32-github-ci.elf
+            echo "::endgroup::"
+          fi
+
+          # If specific custom target
+          if [ "$TARGET" != "all" ] && [ "$TARGET" != "rx-diy-e28-2400-esp8285" ] && [ "$TARGET" != "tx-diy-e28-2400-esp32" ]; then
+            echo "::group::Building custom target $TARGET"
+            pio run -e "$TARGET"
+            cp .pio/build/${TARGET}/firmware.bin release/${TARGET}-github-ci.bin
+            cp .pio/build/${TARGET}/firmware.elf release/${TARGET}-github-ci.elf
+            echo "::endgroup::"
+          fi
 
       - name: Build Wireless Bridge firmware
         run: |
@@ -62,14 +87,14 @@ jobs:
           cp esp/mlrs-wireless-bridge/.pio/build/esp8285/firmware.bin release/mlrs-wireless-bridge-esp8266-no-at.bin
           gzip -c -9 release/mlrs-wireless-bridge-esp8266-no-at.bin > release/mlrs-wireless-bridge-esp8266-no-at.bin.gz
 
-      - name: Upload TX firmware artifacts
+      - name: Upload firmware artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: mLRS-firmware-${{ inputs.target || 'tx-diy-e28-2400-esp32' }}
+          name: mLRS-firmware-${{ inputs.target || 'all' }}
           path: |
             .pio/build/**/firmware.bin
             .pio/build/**/firmware.elf
-            release/tx-diy-e28-2400-esp32-v1.4.05.bin
+            release/*-v1.4.05.bin
             release/*-github-ci.bin
             release/*-github-ci.elf
 
